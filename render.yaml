@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: clinical-ai-backend
+    runtime: python
+    rootDir: .
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend app:app
+    envVars:
+      - key: FRONTEND_ORIGIN
+        sync: false
