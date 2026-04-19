@@ -360,6 +360,7 @@ select {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   padding: 14px;
+  min-width: 0;
 }
 
 .metric-card p,
@@ -368,11 +369,33 @@ select {
   color: var(--text-dim);
 }
 
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
 .metric-card strong,
 .detail-card strong,
 .status-card strong,
 .profile-item strong {
   font-size: 1.4rem;
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.detail-note {
+  display: block;
+  color: var(--text-dim);
+  line-height: 1.5;
+  font-size: 0.92rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .status-grid,
@@ -386,6 +409,73 @@ select {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.mini-visual-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.15fr);
+  gap: 12px;
+}
+
+.viz-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 14px;
+  min-width: 0;
+}
+
+.meter-shell {
+  position: relative;
+  margin: 12px 0 14px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bar-copy {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.bar-copy span,
+.bar-copy strong {
+  min-width: 0;
+}
+
+.bar-copy span {
+  color: var(--text-dim);
+}
+
+.bar-copy strong {
+  text-align: right;
+  font-size: 0.96rem;
+}
+
+.compact-bar {
+  height: 8px;
 }
 
 .card {
@@ -422,6 +512,7 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .field span {
@@ -450,6 +541,7 @@ select {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
 }
 
 .diagnosis-result {
@@ -466,6 +558,13 @@ select {
     linear-gradient(135deg, rgba(122, 162, 255, 0.18), rgba(43, 214, 187, 0.14)),
     rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.result-banner h3 {
+  margin: 6px 0 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .detail-grid {
@@ -589,7 +688,8 @@ th {
   .metric-grid,
   .status-grid,
   .profile-grid,
-  .hero-foot {
+  .hero-foot,
+  .mini-visual-grid {
     grid-template-columns: 1fr;
   }
 

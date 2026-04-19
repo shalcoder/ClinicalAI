@@ -133,6 +133,15 @@ function App() {
     { label: "Diagnoses Tracked", value: overview?.diagnosis_distribution?.length ?? "--" },
   ];
 
+  const patientVitals = patientResult
+    ? [
+        { label: "Glucose", value: patientResult.patient.Glucose_Fasting, max: 200, unit: "mg/dL" },
+        { label: "CRP", value: patientResult.patient.CRP, max: 50, unit: "mg/L" },
+        { label: "Hemoglobin", value: patientResult.patient.Hemoglobin, max: 20, unit: "g/dL" },
+        { label: "WBC Count", value: patientResult.patient.WBC_Count, max: 15000, unit: "" },
+      ]
+    : [];
+
   return (
     <div className="page-shell">
       <header className="product-bar">
@@ -367,8 +376,15 @@ function App() {
                       </div>
                       <div>
                         <p className="small-label">Confidence</p>
-                        <h3>{patientResult.prediction.confidence}%</h3>
+                        <h3>{formatMetric(patientResult.prediction.confidence)}%</h3>
                       </div>
+                    </div>
+                    <div className="mini-visual-grid">
+                      <ConfidenceMeter
+                        label="Prediction Confidence"
+                        value={patientResult.prediction.confidence}
+                      />
+                      <InsightBars title="Lab Snapshot" items={patientVitals} />
                     </div>
                     <LabTable items={patientResult.prediction.lab_analysis} />
                   </div>
@@ -477,7 +493,7 @@ function MetricCard({ label, value }) {
   return (
     <div className="metric-card">
       <p>{label}</p>
-      <strong>{value}</strong>
+      <strong>{typeof value === "number" ? formatMetric(value) : value}</strong>
     </div>
   );
 }
@@ -486,7 +502,47 @@ function ProfileItem({ label, value }) {
   return (
     <div className="profile-item">
       <p className="small-label">{label}</p>
-      <strong>{value}</strong>
+      <strong title={String(value)}>{typeof value === "number" ? formatMetric(value) : value}</strong>
+    </div>
+  );
+}
+
+function ConfidenceMeter({ label, value }) {
+  const normalized = Math.max(0, Math.min(Number(value) || 0, 100));
+  return (
+    <div className="viz-card">
+      <p className="small-label">{label}</p>
+      <div className="meter-shell">
+        <div className="meter-fill" style={{ width: `${normalized}%` }} />
+      </div>
+      <strong>{formatMetric(normalized)}%</strong>
+    </div>
+  );
+}
+
+function InsightBars({ title, items }) {
+  return (
+    <div className="viz-card">
+      <p className="small-label">{title}</p>
+      <div className="bar-list">
+        {items.map((item) => {
+          const normalized = Math.max(6, Math.min((Number(item.value) / item.max) * 100, 100));
+          return (
+            <div className="bar-item" key={item.label}>
+              <div className="bar-copy">
+                <span>{item.label}</span>
+                <strong>
+                  {formatMetric(item.value)}
+                  {item.unit ? ` ${item.unit}` : ""}
+                </strong>
+              </div>
+              <div className="feature-bar compact-bar">
+                <div style={{ width: `${normalized}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -534,12 +590,12 @@ function DiagnosisResult({ result }) {
         <div className="detail-card">
           <p className="small-label">Autoimmune Risk</p>
           <strong>{result.autoimmune.risk_level}</strong>
-          <span>{result.autoimmune.condition}</span>
+          <span className="detail-note">{result.autoimmune.condition}</span>
         </div>
         <div className="detail-card">
           <p className="small-label">Autoimmune Score</p>
-          <strong>{result.autoimmune.score}%</strong>
-          <span>Risk score from inflammatory markers</span>
+          <strong>{formatMetric(result.autoimmune.score)}%</strong>
+          <span className="detail-note">Risk score from inflammatory markers</span>
         </div>
       </div>
       <LabTable items={result.lab_analysis} />
@@ -572,6 +628,19 @@ function LabTable({ items }) {
       </table>
     </div>
   );
+}
+
+function formatMetric(value) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return value;
+  }
+  if (Number.isInteger(value)) {
+    return value.toLocaleString();
+  }
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: value < 10 ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
 }
 
 export default App;
