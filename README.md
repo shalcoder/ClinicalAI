@@ -1,13 +1,128 @@
 # Clinical AI Project
 
-This project now has two deployable parts:
+Clinical AI Project is a full-stack diagnostic web application built around a trained CatBoost model and a clinical dataset. It provides an interactive frontend for manual disease prediction, patient lookup, doctor recommendations, and operational monitoring, backed by a Python API that serves model inference and dataset-driven insights.
 
-- `backend/`: Flask API for prediction, patient lookup, doctors, and dashboard metrics. Deploy this on Render.
-- `frontend/`: React + Vite application for the production UI. Deploy this on Vercel.
+The project is structured for deployment with:
 
-## Local development
+- `frontend/` on Vercel
+- `backend/` on Render
+
+## Overview
+
+The application combines:
+
+- AI-assisted manual diagnosis from clinical input values
+- patient record lookup by `Patient_ID`
+- specialist recommendation data for mapped diseases
+- operational dashboards for disease mix and feature importance
+- a deployable React + Flask architecture suitable for cloud hosting
+
+## Tech Stack
+
+### Frontend
+
+- React 18
+- Vite
+- plain CSS
 
 ### Backend
+
+- Flask
+- Flask-CORS
+- python-dotenv
+- pandas
+- CatBoost
+- scikit-learn
+- gunicorn
+
+### Model Assets
+
+- `catboost_model.cbm`
+- `label_encoder.pkl`
+- `clinical_dataset.csv`
+
+## Project Structure
+
+```text
+Clinical_AI_Project/
+├─ backend/
+│  ├─ app.py
+│  ├─ model_service.py
+│  ├─ requirements.txt
+│  └─ .env.example
+├─ frontend/
+│  ├─ src/
+│  │  ├─ App.jsx
+│  │  ├─ main.jsx
+│  │  └─ styles.css
+│  ├─ .env.example
+│  ├─ package.json
+│  ├─ vite.config.js
+│  └─ vercel.json
+├─ render.yaml
+├─ catboost_model.cbm
+├─ label_encoder.pkl
+├─ clinical_dataset.csv
+└─ README.md
+```
+
+## Features
+
+### Frontend
+
+- tabbed workspace UI
+- `Command Center` dashboard
+- `Diagnosis Lab` for manual prediction
+- `Patient Records` for search by patient ID
+- `Care Network` for specialist recommendations
+
+### Backend API
+
+- health check endpoint
+- clinical overview metrics
+- disease list endpoint
+- doctor recommendation endpoint
+- patient lookup endpoint
+- manual diagnosis inference endpoint
+
+## How It Works
+
+### Manual Diagnosis
+
+The frontend submits clinical input values to the backend endpoint:
+
+```text
+POST /api/diagnosis/manual
+```
+
+The backend:
+
+- normalizes the input
+- encodes categorical values like gender
+- loads the CatBoost model and label encoder
+- predicts disease and confidence
+- computes autoimmune score and risk
+- returns lab analysis and feature-importance summaries
+
+### Patient Lookup
+
+The frontend requests:
+
+```text
+GET /api/patients/<patient_id>
+```
+
+The backend finds the row in the dataset, runs prediction on that patient, and returns both stored patient data and model output.
+
+## Local Development
+
+### Prerequisites
+
+- Python 3.13 recommended for deployment compatibility
+- Node.js 20+ or newer
+- npm
+
+## Backend Setup
 
 ```powershell
 cd backend
@@ -16,9 +131,34 @@ copy .env.example .env
 python app.py
 ```
 
-The API runs on `http://localhost:8000`.
+The backend runs by default at:
 
-### Frontend
+```text
+http://localhost:8000
+```
+
+### Backend Environment Variables
+
+Create `backend/.env` from `backend/.env.example`.
+
+```env
+PORT=8000
+FRONTEND_ORIGIN=http://localhost:5173
+```
+
+Notes:
+
+- `PORT` is used locally and by Render
+- `FRONTEND_ORIGIN` controls allowed frontend origins for CORS
+- multiple frontend origins are supported as comma-separated values
+
+Example:
+
+```env
+FRONTEND_ORIGIN=https://your-frontend.vercel.app,https://your-preview.vercel.app
+```
+
+## Frontend Setup
 
 ```powershell
 cd frontend
@@ -27,52 +167,135 @@ copy .env.example .env
 npm run dev
 ```
 
-Set `VITE_API_BASE_URL` in `frontend/.env` to your backend URL.
+The frontend dev server usually runs at:
 
-Backend envs in `backend/.env.example`:
+```text
+http://localhost:5173
+```
 
-- `PORT`: local/backend port
-- `FRONTEND_ORIGIN`: allowed frontend origin. Use a comma-separated list if needed.
+### Frontend Environment Variables
 
-## Deploy backend to Render
+Create `frontend/.env` from `frontend/.env.example`.
 
-1. Push the repository to GitHub.
-2. In Render, create a new `Blueprint` or `Web Service` from the repo.
-3. If using the included blueprint, Render will read [render.yaml](./render.yaml).
-4. Set `FRONTEND_ORIGIN` to your Vercel domain, for example `https://your-frontend.vercel.app`.
-5. If you use both preview and production frontends, you can set a comma-separated value such as `https://your-frontend.vercel.app,https://your-frontend-git-main-your-team.vercel.app`.
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
 
-Render build settings if entered manually:
+Notes:
 
+- this should point to your backend base URL
+- trailing slashes are safely normalized by the frontend
+
+## Build Commands
+
+### Frontend Production Build
+
+```powershell
+cd frontend
+npm run build
+```
+
+### Backend Syntax Check
+
+```powershell
+python -m py_compile backend\app.py backend\model_service.py
+```
+
+## Deployment
+
+### Deploy Backend to Render
+
+This repository already includes [render.yaml](./render.yaml).
+
+### Render Settings
+
+- Runtime: `Python`
 - Build command: `pip install -r backend/requirements.txt`
 - Start command: `gunicorn --chdir backend app:app`
 
-## Deploy frontend to Vercel
-
-1. Import the same repository into Vercel.
-2. Set the root directory to `frontend`.
-3. Framework preset: `Vite`.
-4. Add environment variable `VITE_API_BASE_URL` with your Render backend URL, for example `https://your-backend.onrender.com`.
-5. Deploy.
-
-Vercel env:
-
-- `VITE_API_BASE_URL=https://your-backend.onrender.com`
-
-Render env:
+### Render Environment Variables
 
 - `FRONTEND_ORIGIN=https://your-frontend.vercel.app`
 
-## API endpoints
+If you use both production and preview Vercel URLs:
 
-- `GET /api/health`
-- `GET /api/overview`
-- `GET /api/diseases`
-- `GET /api/doctors?disease=Diabetes`
-- `GET /api/patients/<patient_id>`
-- `POST /api/diagnosis/manual`
+```env
+FRONTEND_ORIGIN=https://your-frontend.vercel.app,https://your-preview.vercel.app
+```
 
-Example manual diagnosis payload:
+### Deploy Frontend to Vercel
+
+### Vercel Settings
+
+- Framework preset: `Vite`
+- Root directory: `frontend`
+
+### Vercel Environment Variables
+
+- `VITE_API_BASE_URL=https://your-backend.onrender.com`
+
+## Frontend and Backend Connection
+
+The connection between Vercel and Render is based on these two variables:
+
+- Vercel frontend uses `VITE_API_BASE_URL`
+- Render backend allows the frontend through `FRONTEND_ORIGIN`
+
+For production, make sure:
+
+1. `VITE_API_BASE_URL` points to the Render backend URL
+2. `FRONTEND_ORIGIN` matches the Vercel frontend URL
+
+Example:
+
+```env
+# Vercel
+VITE_API_BASE_URL=https://clinical-ai-backend.onrender.com
+
+# Render
+FRONTEND_ORIGIN=https://clinical-ai.vercel.app
+```
+
+## API Reference
+
+### Health
+
+```http
+GET /api/health
+```
+
+### Overview
+
+```http
+GET /api/overview
+```
+
+### Diseases
+
+```http
+GET /api/diseases
+```
+
+### Doctors
+
+```http
+GET /api/doctors?disease=Diabetes
+```
+
+### Patient Lookup
+
+```http
+GET /api/patients/<patient_id>
+```
+
+### Manual Diagnosis
+
+```http
+POST /api/diagnosis/manual
+Content-Type: application/json
+```
+
+Example request body:
 
 ```json
 {
@@ -90,3 +313,28 @@ Example manual diagnosis payload:
   "ANA_Positive": 0
 }
 ```
+
+## Important Files
+
+- Backend entrypoint: [backend/app.py](./backend/app.py)
+- Backend model logic: [backend/model_service.py](./backend/model_service.py)
+- Backend dependencies: [backend/requirements.txt](./backend/requirements.txt)
+- Frontend app: [frontend/src/App.jsx](./frontend/src/App.jsx)
+- Frontend styles: [frontend/src/styles.css](./frontend/src/styles.css)
+- Render config: [render.yaml](./render.yaml)
+
+## Notes
+
+- The original Streamlit app remains in `app.py` for reference, but the deployable web architecture uses `frontend/` and `backend/`
+- the model runs on the backend, not in the browser
+- `.env` files are intentionally ignored by git
+
+## Current Status
+
+- frontend build verified
+- backend syntax verified
+- repository prepared for Vercel + Render deployment
+
+## License
+
+Add a license file if you want to distribute this project publicly.

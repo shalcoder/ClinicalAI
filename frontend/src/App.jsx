@@ -33,6 +33,7 @@ const fieldConfig = [
 ];
 
 const tabItems = [
+  { id: "home", label: "Home" },
   { id: "command", label: "Command Center" },
   { id: "diagnosis", label: "Diagnosis Lab" },
   { id: "patients", label: "Patient Records" },
@@ -51,7 +52,7 @@ function App() {
   const [manualResult, setManualResult] = useState(null);
   const [loadingManual, setLoadingManual] = useState(false);
   const [loadingPatient, setLoadingPatient] = useState(false);
-  const [activeTab, setActiveTab] = useState("command");
+  const [activeTab, setActiveTab] = useState("home");
 
   useEffect(() => {
     loadOverview();
@@ -134,35 +135,21 @@ function App() {
 
   return (
     <div className="page-shell">
-      <header className="hero">
-        <div className="hero-copy">
-          <p className="eyebrow">Clinical Intelligence Platform</p>
-          <h1>Professional clinical decision support, rebuilt for deployment.</h1>
-          <p className="hero-text">
-            A production-ready frontend for patient lookup, AI-assisted diagnosis, specialist
-            discovery, and operational insight dashboards.
-          </p>
-          <div className="hero-actions">
-            <button className="primary-link" onClick={() => setActiveTab("diagnosis")} type="button">
-              Open Diagnosis Lab
-            </button>
-            <button className="secondary-link" onClick={() => setActiveTab("patients")} type="button">
-              Open Patient Records
-            </button>
+      <header className="product-bar">
+        <div className="brand-lockup">
+          <div className="brand-mark">C</div>
+          <div>
+            <p className="product-name">Clinical AI</p>
+            <p className="product-meta">Inference workspace for diagnostics, triage, and care routing</p>
           </div>
         </div>
-        <div className="hero-panel">
-          <div className="panel-label">System Status</div>
-          <div className="metric-grid">
-            <MetricCard label="Records" value={overview?.summary?.records ?? "--"} />
-            <MetricCard label="Avg Age" value={overview?.summary?.avg_age ?? "--"} />
-            <MetricCard label="Avg Glucose" value={overview?.summary?.avg_glucose ?? "--"} />
-            <MetricCard label="Avg CRP" value={overview?.summary?.avg_crp ?? "--"} />
-          </div>
+        <div className="product-status">
+          <span className="status-dot" />
+          <span>System online</span>
         </div>
       </header>
 
-      <section className="tabs-shell">
+      <section className="tabs-shell top-tabs">
         <div className="tabs-row">
           {tabItems.map((tab) => (
             <button
@@ -175,6 +162,70 @@ function App() {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="tabs-shell">
+        {activeTab === "home" ? (
+          <section className="tab-panel">
+            <header className="hero">
+              <div className="hero-copy">
+                <div className="launch-badge">Unified clinical intelligence surface</div>
+                <p className="eyebrow">Clinical Intelligence Platform</p>
+                <h1>Professional clinical decision support, rebuilt for deployment.</h1>
+                <p className="hero-text">
+                  A production-ready frontend for patient lookup, AI-assisted diagnosis, specialist
+                  discovery, and operational insight dashboards.
+                </p>
+                <div className="hero-actions">
+                  <button
+                    className="primary-link"
+                    onClick={() => setActiveTab("diagnosis")}
+                    type="button"
+                  >
+                    Open Diagnosis Lab
+                  </button>
+                  <button
+                    className="secondary-link"
+                    onClick={() => setActiveTab("patients")}
+                    type="button"
+                  >
+                    Open Patient Records
+                  </button>
+                </div>
+                <div className="hero-foot">
+                  <div className="hero-signal">
+                    <strong>Model-backed</strong>
+                    <span>CatBoost inference served from the backend API</span>
+                  </div>
+                  <div className="hero-signal">
+                    <strong>Deploy-ready</strong>
+                    <span>Vercel frontend and Render backend configuration included</span>
+                  </div>
+                </div>
+              </div>
+              <div className="hero-stack">
+                <div className="hero-panel">
+                  <div className="panel-label">System Status</div>
+                  <div className="metric-grid">
+                    <MetricCard label="Records" value={overview?.summary?.records ?? "--"} />
+                    <MetricCard label="Avg Age" value={overview?.summary?.avg_age ?? "--"} />
+                    <MetricCard label="Avg Glucose" value={overview?.summary?.avg_glucose ?? "--"} />
+                    <MetricCard label="Avg CRP" value={overview?.summary?.avg_crp ?? "--"} />
+                  </div>
+                </div>
+                <div className="spotlight-card">
+                  <p className="small-label">Platform Focus</p>
+                  <h3>From patient signal to specialist action in one workspace</h3>
+                  <div className="spotlight-list">
+                    <span>Manual diagnosis</span>
+                    <span>Patient retrieval</span>
+                    <span>Care network routing</span>
+                  </div>
+                </div>
+              </div>
+            </header>
+          </section>
+        ) : null}
 
         {activeTab === "command" ? (
           <section className="tab-panel">
