@@ -32,6 +32,13 @@ const fieldConfig = [
   ["ANA_Positive", "select"],
 ];
 
+const tabItems = [
+  { id: "command", label: "Command Center" },
+  { id: "diagnosis", label: "Diagnosis Lab" },
+  { id: "patients", label: "Patient Records" },
+  { id: "care", label: "Care Network" },
+];
+
 function App() {
   const [overview, setOverview] = useState(null);
   const [doctorDisease, setDoctorDisease] = useState("");
@@ -44,6 +51,7 @@ function App() {
   const [manualResult, setManualResult] = useState(null);
   const [loadingManual, setLoadingManual] = useState(false);
   const [loadingPatient, setLoadingPatient] = useState(false);
+  const [activeTab, setActiveTab] = useState("command");
 
   useEffect(() => {
     loadOverview();
@@ -82,6 +90,7 @@ function App() {
         throw new Error(data.error || "Patient lookup failed");
       }
       setPatientResult(data);
+      setActiveTab("patients");
     } catch (error) {
       setPatientError(error.message);
     } finally {
@@ -103,6 +112,7 @@ function App() {
         throw new Error(data.error || "Diagnosis failed");
       }
       setManualResult(data);
+      setActiveTab("diagnosis");
     } catch (error) {
       setManualResult({ error: error.message });
     } finally {
@@ -115,6 +125,13 @@ function App() {
     setManualForm((current) => ({ ...current, [name]: nextValue }));
   }
 
+  const monitoringCards = [
+    { label: "High Priority Cases", value: manualResult?.diagnosis ? 1 : 0 },
+    { label: "Autoimmune Alerts", value: manualResult?.autoimmune?.score > 60 ? 1 : 0 },
+    { label: "Specialists Available", value: doctors.length || "--" },
+    { label: "Diagnoses Tracked", value: overview?.diagnosis_distribution?.length ?? "--" },
+  ];
+
   return (
     <div className="page-shell">
       <header className="hero">
@@ -126,12 +143,12 @@ function App() {
             discovery, and operational insight dashboards.
           </p>
           <div className="hero-actions">
-            <a href="#manual-diagnosis" className="primary-link">
-              Run AI Diagnosis
-            </a>
-            <a href="#patient-lookup" className="secondary-link">
-              Search Patient Record
-            </a>
+            <button className="primary-link" onClick={() => setActiveTab("diagnosis")} type="button">
+              Open Diagnosis Lab
+            </button>
+            <button className="secondary-link" onClick={() => setActiveTab("patients")} type="button">
+              Open Patient Records
+            </button>
           </div>
         </div>
         <div className="hero-panel">
@@ -145,156 +162,262 @@ function App() {
         </div>
       </header>
 
-      <main className="content-grid">
-        <section className="card wide-card" id="manual-diagnosis">
-          <div className="section-heading">
-            <div>
-              <p className="section-kicker">AI Diagnosis</p>
-              <h2>Manual clinical assessment</h2>
-            </div>
-          </div>
-          <form className="form-grid" onSubmit={handleManualSubmit}>
-            {fieldConfig.map(([fieldName, type]) => (
-              <label key={fieldName} className="field">
-                <span>{fieldName.replaceAll("_", " ")}</span>
-                {type === "select" ? (
-                  <select
-                    value={manualForm[fieldName]}
-                    onChange={(event) => updateManualField(fieldName, event.target.value, type)}
-                  >
-                    {fieldName === "Gender" ? (
-                      <>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value={0}>Negative</option>
-                        <option value={1}>Positive</option>
-                      </>
-                    )}
-                  </select>
-                ) : (
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={manualForm[fieldName]}
-                    onChange={(event) => updateManualField(fieldName, event.target.value, type)}
-                  />
-                )}
-              </label>
-            ))}
-            <button className="primary-button" disabled={loadingManual} type="submit">
-              {loadingManual ? "Analyzing..." : "Generate Diagnosis"}
-            </button>
-          </form>
-          <DiagnosisResult result={manualResult} />
-        </section>
-
-        <section className="card" id="patient-lookup">
-          <div className="section-heading">
-            <div>
-              <p className="section-kicker">Patient Search</p>
-              <h2>Lookup by patient ID</h2>
-            </div>
-          </div>
-          <form className="search-row" onSubmit={handlePatientLookup}>
-            <input
-              value={patientId}
-              onChange={(event) => setPatientId(event.target.value)}
-              placeholder="Enter Patient ID"
-            />
-            <button className="secondary-button" disabled={loadingPatient} type="submit">
-              {loadingPatient ? "Searching..." : "Search"}
-            </button>
-          </form>
-          {patientError ? <p className="error-text">{patientError}</p> : null}
-          {patientResult ? (
-            <div className="stack">
-              <div className="result-banner">
-                <div>
-                  <p className="small-label">Patient</p>
-                  <h3>{patientResult.patient.Patient_ID}</h3>
-                </div>
-                <div>
-                  <p className="small-label">Predicted Disease</p>
-                  <h3>{patientResult.prediction.diagnosis}</h3>
-                </div>
-                <div>
-                  <p className="small-label">Confidence</p>
-                  <h3>{patientResult.prediction.confidence}%</h3>
-                </div>
-              </div>
-              <LabTable items={patientResult.prediction.lab_analysis} />
-            </div>
-          ) : null}
-        </section>
-
-        <section className="card">
-          <div className="section-heading">
-            <div>
-              <p className="section-kicker">Specialist Network</p>
-              <h2>Doctor recommendations</h2>
-            </div>
-            <select
-              value={doctorDisease}
-              onChange={(event) => {
-                const value = event.target.value;
-                setDoctorDisease(value);
-                loadDoctors(value);
-              }}
+      <section className="tabs-shell">
+        <div className="tabs-row">
+          {tabItems.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`tab-button${activeTab === tab.id ? " active" : ""}`}
+              onClick={() => setActiveTab(tab.id)}
             >
-              <option value="">All diseases</option>
-              {diseases.map((disease) => (
-                <option key={disease} value={disease}>
-                  {disease}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="doctor-grid">
-            {doctors.map((doctor) => (
-              <article className="doctor-card" key={`${doctor.disease}-${doctor.doctor}`}>
-                <p className="chip">{doctor.disease}</p>
-                <h3>{doctor.doctor}</h3>
-                <p>{doctor.clinic}</p>
-                <p className="muted">{doctor.experience}</p>
-                <p className="coordinates">
-                  {doctor.lat}, {doctor.lon}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        <section className="card">
-          <div className="section-heading">
-            <div>
-              <p className="section-kicker">Insight Panel</p>
-              <h2>Model overview</h2>
+        {activeTab === "command" ? (
+          <section className="tab-panel">
+            <div className="section-heading">
+              <div>
+                <p className="section-kicker">Operations</p>
+                <h2>Clinical command center</h2>
+              </div>
             </div>
-          </div>
-          <div className="feature-list">
-            {overview?.top_features?.map((feature) => (
-              <div className="feature-row" key={feature.feature}>
-                <span>{feature.feature}</span>
-                <div className="feature-bar">
-                  <div style={{ width: `${Math.min(feature.importance, 100)}%` }} />
+            <div className="status-grid">
+              {monitoringCards.map((card) => (
+                <div className="status-card" key={card.label}>
+                  <p className="small-label">{card.label}</p>
+                  <strong>{card.value}</strong>
                 </div>
-                <strong>{feature.importance}</strong>
+              ))}
+            </div>
+            <div className="content-grid">
+              <section className="card">
+                <div className="section-heading">
+                  <div>
+                    <p className="section-kicker">Model Overview</p>
+                    <h2>Top clinical drivers</h2>
+                  </div>
+                </div>
+                <div className="feature-list">
+                  {overview?.top_features?.map((feature) => (
+                    <div className="feature-row" key={feature.feature}>
+                      <span>{feature.feature}</span>
+                      <div className="feature-bar">
+                        <div style={{ width: `${Math.min(feature.importance, 100)}%` }} />
+                      </div>
+                      <strong>{feature.importance}</strong>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="card">
+                <div className="section-heading">
+                  <div>
+                    <p className="section-kicker">Case Mix</p>
+                    <h2>Diagnosis distribution</h2>
+                  </div>
+                </div>
+                <div className="distribution-list">
+                  {overview?.diagnosis_distribution?.map((item) => (
+                    <div key={item.diagnosis} className="distribution-row">
+                      <span>{item.diagnosis}</span>
+                      <strong>{item.count}</strong>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </section>
+        ) : null}
+
+        {activeTab === "diagnosis" ? (
+          <section className="tab-panel">
+            <section className="card wide-card" id="manual-diagnosis">
+              <div className="section-heading">
+                <div>
+                  <p className="section-kicker">AI Diagnosis</p>
+                  <h2>Manual clinical assessment</h2>
+                </div>
               </div>
-            ))}
-          </div>
-          <div className="distribution-list">
-            {overview?.diagnosis_distribution?.map((item) => (
-              <div key={item.diagnosis} className="distribution-row">
-                <span>{item.diagnosis}</span>
-                <strong>{item.count}</strong>
-              </div>
-            ))}
-          </div>
-        </section>
-      </main>
+              <form className="form-grid" onSubmit={handleManualSubmit}>
+                {fieldConfig.map(([fieldName, type]) => (
+                  <label key={fieldName} className="field">
+                    <span>{fieldName.replaceAll("_", " ")}</span>
+                    {type === "select" ? (
+                      <select
+                        value={manualForm[fieldName]}
+                        onChange={(event) => updateManualField(fieldName, event.target.value, type)}
+                      >
+                        {fieldName === "Gender" ? (
+                          <>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value={0}>Negative</option>
+                            <option value={1}>Positive</option>
+                          </>
+                        )}
+                      </select>
+                    ) : (
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={manualForm[fieldName]}
+                        onChange={(event) => updateManualField(fieldName, event.target.value, type)}
+                      />
+                    )}
+                  </label>
+                ))}
+                <button className="primary-button" disabled={loadingManual} type="submit">
+                  {loadingManual ? "Analyzing..." : "Generate Diagnosis"}
+                </button>
+              </form>
+              <DiagnosisResult result={manualResult} />
+            </section>
+          </section>
+        ) : null}
+
+        {activeTab === "patients" ? (
+          <section className="tab-panel">
+            <div className="content-grid">
+              <section className="card" id="patient-lookup">
+                <div className="section-heading">
+                  <div>
+                    <p className="section-kicker">Patient Search</p>
+                    <h2>Lookup by patient ID</h2>
+                  </div>
+                </div>
+                <form className="search-row" onSubmit={handlePatientLookup}>
+                  <input
+                    value={patientId}
+                    onChange={(event) => setPatientId(event.target.value)}
+                    placeholder="Enter Patient ID"
+                  />
+                  <button className="secondary-button" disabled={loadingPatient} type="submit">
+                    {loadingPatient ? "Searching..." : "Search"}
+                  </button>
+                </form>
+                {patientError ? <p className="error-text">{patientError}</p> : null}
+                {patientResult ? (
+                  <div className="stack">
+                    <div className="result-banner">
+                      <div>
+                        <p className="small-label">Patient</p>
+                        <h3>{patientResult.patient.Patient_ID}</h3>
+                      </div>
+                      <div>
+                        <p className="small-label">Predicted Disease</p>
+                        <h3>{patientResult.prediction.diagnosis}</h3>
+                      </div>
+                      <div>
+                        <p className="small-label">Confidence</p>
+                        <h3>{patientResult.prediction.confidence}%</h3>
+                      </div>
+                    </div>
+                    <LabTable items={patientResult.prediction.lab_analysis} />
+                  </div>
+                ) : null}
+              </section>
+
+              <section className="card">
+                <div className="section-heading">
+                  <div>
+                    <p className="section-kicker">Patient Summary</p>
+                    <h2>Clinical profile snapshot</h2>
+                  </div>
+                </div>
+                {patientResult ? (
+                  <div className="profile-grid">
+                    <ProfileItem label="Age" value={patientResult.patient.Age} />
+                    <ProfileItem label="Gender" value={patientResult.patient.Gender} />
+                    <ProfileItem label="Glucose" value={patientResult.patient.Glucose_Fasting} />
+                    <ProfileItem label="CRP" value={patientResult.patient.CRP} />
+                    <ProfileItem label="Hemoglobin" value={patientResult.patient.Hemoglobin} />
+                    <ProfileItem label="WBC Count" value={patientResult.patient.WBC_Count} />
+                  </div>
+                ) : (
+                  <p className="muted">Search a patient ID to load the clinical summary and lab trend data.</p>
+                )}
+              </section>
+            </div>
+          </section>
+        ) : null}
+
+        {activeTab === "care" ? (
+          <section className="tab-panel">
+            <div className="content-grid">
+              <section className="card">
+                <div className="section-heading">
+                  <div>
+                    <p className="section-kicker">Specialist Network</p>
+                    <h2>Doctor recommendations</h2>
+                  </div>
+                  <select
+                    value={doctorDisease}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setDoctorDisease(value);
+                      loadDoctors(value);
+                    }}
+                  >
+                    <option value="">All diseases</option>
+                    {diseases.map((disease) => (
+                      <option key={disease} value={disease}>
+                        {disease}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="doctor-grid">
+                  {doctors.map((doctor) => (
+                    <article className="doctor-card" key={`${doctor.disease}-${doctor.doctor}`}>
+                      <p className="chip">{doctor.disease}</p>
+                      <h3>{doctor.doctor}</h3>
+                      <p>{doctor.clinic}</p>
+                      <p className="muted">{doctor.experience}</p>
+                      <p className="coordinates">
+                        {doctor.lat}, {doctor.lon}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="card">
+                <div className="section-heading">
+                  <div>
+                    <p className="section-kicker">Care Workflow</p>
+                    <h2>Recommended next actions</h2>
+                  </div>
+                </div>
+                <div className="timeline">
+                  <TimelineItem
+                    title="Triage case"
+                    description="Run manual diagnosis or search an existing patient record to establish urgency."
+                  />
+                  <TimelineItem
+                    title="Assign specialist"
+                    description="Filter the doctor network by disease and route the case to the right clinic."
+                  />
+                  <TimelineItem
+                    title="Review inflammatory markers"
+                    description="Use CRP, WBC, hemoglobin, and ANA status to assess autoimmune escalation."
+                  />
+                  <TimelineItem
+                    title="Document treatment plan"
+                    description="Capture medication guidance and clinician review before patient handoff."
+                  />
+                </div>
+              </section>
+            </div>
+          </section>
+        ) : null}
+      </section>
     </div>
   );
 }
@@ -304,6 +427,27 @@ function MetricCard({ label, value }) {
     <div className="metric-card">
       <p>{label}</p>
       <strong>{value}</strong>
+    </div>
+  );
+}
+
+function ProfileItem({ label, value }) {
+  return (
+    <div className="profile-item">
+      <p className="small-label">{label}</p>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function TimelineItem({ title, description }) {
+  return (
+    <div className="timeline-item">
+      <div className="timeline-dot" />
+      <div>
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
     </div>
   );
 }
