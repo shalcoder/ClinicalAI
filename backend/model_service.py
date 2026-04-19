@@ -236,5 +236,10 @@ def get_diseases() -> list[str]:
     return sorted(load_dataset()["Diagnosis"].unique().tolist())
 
 
-def get_frontend_origin() -> str:
-    return os.getenv("FRONTEND_ORIGIN", "*")
+def get_allowed_origins() -> list[str] | str:
+    raw_value = os.getenv("FRONTEND_ORIGIN", "").strip()
+    if not raw_value:
+        return ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+    origins = [item.strip() for item in raw_value.split(",") if item.strip()]
+    return origins or "*"

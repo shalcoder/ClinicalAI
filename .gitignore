@@ -5,3 +5,4 @@ venv/
 frontend/node_modules/
 frontend/dist/
 frontend/.env
+backend/.env

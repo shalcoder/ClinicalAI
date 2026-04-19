@@ -12,6 +12,7 @@ This project now has two deployable parts:
 ```powershell
 cd backend
 pip install -r requirements.txt
+copy .env.example .env
 python app.py
 ```
 
@@ -28,12 +29,18 @@ npm run dev
 
 Set `VITE_API_BASE_URL` in `frontend/.env` to your backend URL.
 
+Backend envs in `backend/.env.example`:
+
+- `PORT`: local/backend port
+- `FRONTEND_ORIGIN`: allowed frontend origin. Use a comma-separated list if needed.
+
 ## Deploy backend to Render
 
 1. Push the repository to GitHub.
 2. In Render, create a new `Blueprint` or `Web Service` from the repo.
 3. If using the included blueprint, Render will read [render.yaml](./render.yaml).
 4. Set `FRONTEND_ORIGIN` to your Vercel domain, for example `https://your-frontend.vercel.app`.
+5. If you use both preview and production frontends, you can set a comma-separated value such as `https://your-frontend.vercel.app,https://your-frontend-git-main-your-team.vercel.app`.
 
 Render build settings if entered manually:
 
@@ -47,6 +54,14 @@ Render build settings if entered manually:
 3. Framework preset: `Vite`.
 4. Add environment variable `VITE_API_BASE_URL` with your Render backend URL, for example `https://your-backend.onrender.com`.
 5. Deploy.
+
+Vercel env:
+
+- `VITE_API_BASE_URL=https://your-backend.onrender.com`
+
+Render env:
+
+- `FRONTEND_ORIGIN=https://your-frontend.vercel.app`
 
 ## API endpoints
 

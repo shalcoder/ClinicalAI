@@ -1,18 +1,32 @@
 from __future__ import annotations
 
+import os
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from dotenv import load_dotenv
 
-from model_service import build_diagnosis_response, find_patient, get_diseases, get_doctors, get_frontend_origin, get_overview
+from model_service import build_diagnosis_response, find_patient, get_allowed_origins, get_diseases, get_doctors, get_overview
 
+
+load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": [get_frontend_origin(), "http://localhost:5173"]}})
+CORS(
+    app,
+    resources={r"/api/*": {"origins": get_allowed_origins()}},
+    supports_credentials=False,
+)
+
+
+@app.get("/")
+def root():
+    return jsonify({"service": "clinical-ai-backend", "status": "ok"})
 
 
 @app.get("/api/health")
 def health_check():
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "ok", "allowed_origins": get_allowed_origins()})
 
 
 @app.get("/api/overview")
@@ -62,4 +76,4 @@ def manual_diagnosis():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8000")), debug=True)
